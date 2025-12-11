@@ -76,11 +76,6 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/docs/team',
-          label: 'Team',
-          position: 'left',
-        },
-        {
           href: 'https://studiomios.wixstudio.com/caramanta',
           label: 'Live System',
           position: 'right',
@@ -115,10 +110,6 @@ const config: Config = {
         {
           title: 'Resources',
           items: [
-            {
-              label: 'Team',
-              to: '/docs/team',
-            },
             {
               label: 'GitHub Repository',
               href: 'https://github.com/gibbonstony/ucberkeley-capstone',
