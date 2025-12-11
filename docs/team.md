@@ -4,20 +4,21 @@ sidebar_position: 10
 
 # Team
 
-Caramanta is the result of a collaborative capstone project by four UC Berkeley Master of Information and Data Science (MIDS) students.
+Ground Truth is a collaborative capstone project by four UC Berkeley Master of Information and Data Science (MIDS) students, completed in 2024.
 
 ## Team Members
 
 ### Connor Watson
 **Forecast Agent Lead**
 
-Connor led the development of the Forecast Agent, implementing the ML model suite and Spark parallelization architecture. His work on the "Train-Once Pattern" and forecast manifest tracking enabled the 180x speedup achievement.
+Connor led the development of the Forecast Agent, implementing the ml_lib PySpark framework and achieving the 180x speedup evolution from V1 to V3 architecture.
 
 **Key Contributions**:
-- 15+ ML model implementations (ARIMA, Prophet, XGBoost, LSTM, TFT)
-- Spark parallel backfill architecture
-- Forecast manifest tracking system
-- Model persistence and caching strategy
+- ml_lib PySpark forecasting framework
+- Model implementations: SARIMAX, Prophet, XGBoost, ARIMA, Random Walk
+- "Fit many, publish few" strategy (93% compute savings)
+- Gold table integration and testing schema (forecast_testing)
+- ImputationTransformer for flexible NULL handling
 
 **Background**: Software engineering with focus on distributed systems and ML infrastructure.
 
@@ -26,13 +27,14 @@ Connor led the development of the Forecast Agent, implementing the ML model suit
 ### Stuart Holland
 **Research Agent Lead**
 
-Stuart architected the unified data platform that serves as the foundation for all forecasting and trading operations. His innovative forward-fill interpolation strategy achieved the 90% data reduction while maintaining complete market coverage.
+Stuart architected the gold layer data platform that serves as the foundation for all forecasting and trading operations. His array-based regional data approach achieved 90% row reduction while maintaining complete market coverage.
 
 **Key Contributions**:
-- Unified data architecture design
-- Bronze/Silver/Gold medallion implementation
-- 6 AWS Lambda data collection functions
-- 90% data reduction achievement
+- Gold layer architecture (commodity.gold.unified_data)
+- Array-based regional data (weather, GDELT)
+- 90% data reduction (75,000 → 7,612 rows)
+- 6 AWS Lambda functions for automated data collection
+- Bronze → Gold medallion architecture on Databricks
 
 **Background**: Data engineering expertise with experience in cloud infrastructure and ETL pipelines.
 
@@ -41,13 +43,13 @@ Stuart architected the unified data platform that serves as the foundation for a
 ### Francisco Munoz
 **Trading Agent Specialist**
 
-Francisco developed the trading strategy optimization framework and implemented the rigorous statistical validation process that ensures only high-performing models make it to production.
+Francisco developed the trading strategy framework and conducted the synthetic model experiments that discovered the 70% accuracy threshold for profitability.
 
 **Key Contributions**:
-- 9 trading strategy implementations
-- Statistical validation framework (Diebold-Mariano testing)
-- 70%+ accuracy threshold discovery
-- Backtesting and performance metrics
+- 9 trading strategy implementations (4 baseline + 5 prediction-based)
+- Synthetic model testing (50%-100% accuracy levels)
+- 70% accuracy threshold discovery
+- Multi-model backtesting framework
 
 **Background**: Quantitative finance with expertise in algorithmic trading and risk management.
 
@@ -56,13 +58,14 @@ Francisco developed the trading strategy optimization framework and implemented 
 ### Tony Gibbons
 **Trading Agent Lead & Integration**
 
-Tony led the Trading Agent development and orchestrated the integration of all three agents into a cohesive end-to-end system. His work on the Rolling Horizon MPC controller enables dynamic decision-making in production.
+Tony led the Trading Agent development and orchestrated the integration of all three agents into a cohesive end-to-end system, including production deployment with WhatsApp integration.
 
 **Key Contributions**:
-- Rolling Horizon MPC controller
+- Daily recommendations system (operations framework)
+- WhatsApp integration with multi-currency support (15+ currencies)
+- Multi-model backtesting framework
 - End-to-end system integration
-- Production deployment architecture
-- Parameter optimization framework
+- Unity Catalog data access layer
 
 **Background**: Software engineering and quantitative methods with focus on optimization and control systems.
 
@@ -84,55 +87,55 @@ Tony led the Trading Agent development and orchestrated the integration of all t
 | Layer | Technologies | Primary Owner |
 |:------|:------------|:--------------|
 | **Data Collection** | AWS Lambda, S3, EventBridge | Stuart |
-| **Data Platform** | Databricks, Delta Lake, PySpark | Stuart |
-| **ML Framework** | scikit-learn, Prophet, XGBoost, PyTorch | Connor |
-| **Optimization** | SciPy, NumPy, MPC | Tony |
-| **Trading Logic** | Python, Pandas, Statistical Testing | Francisco |
-| **Deployment** | Databricks Workflows, Git | Tony |
+| **Data Platform** | Databricks, Delta Lake, Unity Catalog, PySpark | Stuart |
+| **ML Framework** | statsmodels (SARIMAX, ARIMA), Prophet, XGBoost | Connor |
+| **Analysis** | NumPy, Pandas, SciPy | All |
+| **Trading Logic** | Python, Databricks SQL, Backtesting Framework | Francisco, Tony |
+| **Deployment** | Databricks Workflows, WhatsApp Integration | Tony |
 
 ## Key Achievements by Agent
 
 ### Research Agent (Stuart)
 
 **Data Architecture Innovation**:
-- Designed unified data table with continuous daily coverage
-- Implemented forward-fill interpolation for gap handling
-- Achieved 90% data reduction (75k → 7.6k rows)
-- Zero null values through intelligent data engineering
+- Gold layer with array-based regional data
+- 90% data reduction (75,000 → 7,612 rows)
+- Flexible NULL handling (production vs experimental tables)
+- Grain optimization: (date, commodity, region) → (date, commodity)
 
 **Infrastructure Excellence**:
-- 6 AWS Lambda functions for automated data collection
-- Bronze/Silver/Gold medallion architecture
-- Delta Lake for ACID transactions and time-travel
-- Cost-efficient serverless infrastructure ($0.20/day)
+- 6 AWS Lambda functions with EventBridge scheduling (2AM UTC daily)
+- Bronze → Gold medallion architecture
+- Delta Lake with Unity Catalog integration
+- Forward-fill interpolation for continuous daily coverage
 
 ### Forecast Agent (Connor)
 
 **ML Performance Breakthrough**:
-- 180x speedup evolution (V1 → V2 → V3)
-- Train-Once Pattern with persistent model storage
-- Parallel Spark backfills for efficient training
-- Forecast manifest for metadata tracking
+- 180x speedup evolution: V1 (24-48h) → V2 (1-2h) → V3 (minutes)
+- ml_lib PySpark framework
+- Gold table integration (90% fewer rows for faster training)
+- Testing schema (forecast_testing) for safe experimentation
 
-**Model Diversity**:
-- 15+ models spanning statistical, tree-based, and deep learning
-- "Fit many, publish few" strategy (93% compute savings)
-- Comprehensive hyperparameter optimization
-- Cross-validation across multiple time windows
+**Model Selection Innovation**:
+- "Fit many, publish few" strategy (93% compute savings: 4,800 → 360 hours)
+- Test 200+ configs, backfill only top ~15
+- ImputationTransformer for flexible NULL handling
+- Statistical model implementations: SARIMAX, Prophet, XGBoost, ARIMA, Random Walk
 
 ### Trading Agent (Francisco & Tony)
 
 **Strategy Development**:
-- 9 distinct trading strategies for different market conditions
-- Statistical validation framework (Diebold-Mariano)
-- 70%+ accuracy threshold discovery
-- Rolling Horizon MPC for dynamic optimization
+- 9 trading strategies (4 baseline + 5 prediction-based)
+- Synthetic model testing (50%-100% accuracy levels)
+- 70% accuracy threshold discovery through controlled experiments
+- Multi-model backtesting (243 scenarios: Coffee + Sugar)
 
-**System Integration**:
-- End-to-end pipeline from data collection to trading signals
-- Automated backfilling and performance monitoring
-- Production-grade error handling and logging
-- Real-time decision-making capability (less than 5 min latency)
+**Production Deployment**:
+- Daily recommendations system with WhatsApp integration
+- Multi-currency support (15+ currencies including COP for Colombian traders)
+- Unity Catalog integration (zero CSV dependencies)
+- Multi-model comparison framework
 
 ## Academic Supervision
 
@@ -170,4 +173,6 @@ We would like to thank:
 
 **Completion Date**: December 2024
 
-Built with ❤️ by Connor Watson, Stuart Holland, Francisco Munoz, and Tony Gibbons
+**Team**: Connor Watson, Stuart Holland, Francisco Munoz, Tony Gibbons
+
+Built as a UC Berkeley MIDS Capstone Project

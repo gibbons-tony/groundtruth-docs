@@ -4,25 +4,27 @@ sidebar_position: 1
 
 # Overview
 
-Caramanta is an end-to-end AI-powered trading agent designed to forecast commodity prices and optimize trading strategies for coffee, cocoa, and sugar markets.
+Ground Truth is an AI-driven commodity forecasting system designed to help Colombian traders optimize harvest sales through coffee and sugar futures price predictions.
 
 ## Mission
 
-Deliver actionable trading recommendations through a three-agent architecture that combines advanced machine learning, rigorous optimization, and real-time data processing.
+Deliver actionable trading recommendations through a three-agent architecture that combines automated data collection, probabilistic machine learning forecasting, and statistical validation.
+
+**Key Insight**: Colombian traders care about `Coffee Price (USD) × COP/USD Exchange Rate`, not just USD futures prices.
 
 ## Key Achievements
 
 ### 90% Data Reduction
-From 75,000 raw data points to 7,600 unified daily records while maintaining complete market coverage through forward-fill interpolation.
+From 75,000 silver layer rows to 7,612 gold layer records while maintaining complete market coverage through forward-fill interpolation and array-based regional data.
 
-### 180x Speedup
-Evolution from V1 → V2 → V3 architecture achieved dramatic performance improvements through Spark parallelization and optimized data structures.
+### 180x Speedup Evolution
+V1 (retrain-per-forecast: 24-48 hours) → V2 (train-once/inference-many: 1-2 hours) → V3 (ml_lib + gold tables: minutes) through architectural improvements and Spark parallelization.
 
 ### 70% Accuracy Threshold
-Rigorous statistical testing identified models achieving 70%+ directional accuracy, filtering from 15+ candidate models to high-confidence predictions.
+Synthetic model testing revealed that 70% directional accuracy is the minimum threshold for prediction-based strategies to outperform baseline approaches.
 
 ### 93% Compute Savings
-"Fit many, publish few" strategy trains comprehensive model suite but deploys only statistically validated winners.
+"Fit many, publish few" strategy: Test 200+ configurations in testing schema, select top ~15 diverse models, backfill only selected models (4,800 hours → 360 hours).
 
 ## System Architecture
 
@@ -31,35 +33,39 @@ graph LR
     A[Research Agent] --> B[Forecast Agent]
     B --> C[Trading Agent]
 
-    A -->|Bronze/Silver/Gold| D[(Delta Lake)]
-    B -->|Predictions| D
-    C -->|Strategies| D
+    A -->|Gold Tables| D[(Delta Lake)]
+    B -->|Distributions/Forecasts| D
+    C -->|Backtest Results| D
 
     E[AWS Lambda] --> A
     F[External APIs] --> E
+    F -->|Market, Weather, FX, GDELT| E
 ```
 
 ## Three-Agent Architecture
 
 ### [Research Agent](/docs/research-agent/introduction)
 **Data collection and ETL pipeline**
-- 6 AWS Lambda functions collecting market, weather, and economic data
-- S3 → Databricks Bronze → Silver → Gold medallion architecture
-- Continuous daily data coverage since 2015-07-07
+- 6 AWS Lambda functions (market, weather, VIX, FX, CFTC, GDELT)
+- EventBridge daily triggers (2AM UTC)
+- Bronze → Gold medallion architecture on Databricks
+- 7,612 rows (Coffee + Sugar, daily from 2015-07-07)
 - [📂 View Code on GitHub →](https://github.com/gibbonstony/ucberkeley-capstone/tree/main/research_agent)
 
 ### [Forecast Agent](/docs/forecast-agent/introduction)
 **Machine learning forecasting engine**
-- 15+ models: ARIMA, SARIMAX, Prophet, XGBoost, LSTM, TFT
-- Parallel Spark backfills for efficient training
-- "Fit many, publish few" model selection strategy
+- ml_lib PySpark framework with gold table integration
+- Models: SARIMAX, Prophet, XGBoost, ARIMA, Random Walk
+- 14-day forecasts with 2,000 Monte Carlo paths
+- Testing schema (forecast_testing) for safe experimentation
 - [📂 View Code on GitHub →](https://github.com/gibbonstony/ucberkeley-capstone/tree/main/forecast_agent)
 
 ### [Trading Agent](/docs/trading-agent/introduction)
 **Strategy optimization and execution**
-- 9 trading strategies with parameter optimization
-- Rolling horizon MPC for dynamic decision-making
-- Statistical validation and performance tracking
+- 9 trading strategies (4 baseline + 5 prediction-based)
+- Multi-model backtesting framework
+- WhatsApp integration for daily recommendations
+- Multi-currency support (15+ currencies including COP)
 - [📂 View Code on GitHub →](https://github.com/gibbonstony/ucberkeley-capstone/tree/main/trading_agent)
 
 ## Technology Stack
@@ -68,9 +74,9 @@ graph LR
 |:------|:------------|
 | **Data Platform** | Databricks, Delta Lake, Unity Catalog, PySpark |
 | **Cloud Infrastructure** | AWS Lambda, S3, EventBridge |
-| **ML Frameworks** | scikit-learn, Prophet, XGBoost, PyTorch (TFT, LSTM) |
-| **Optimization** | SciPy, NumPy, Pandas |
-| **Deployment** | Python 3.11, Git, Databricks Workflows |
+| **ML Frameworks** | statsmodels (SARIMAX, ARIMA), Prophet, XGBoost |
+| **Analysis** | NumPy, Pandas, SciPy |
+| **Deployment** | Python 3.11+, Git, Databricks Workflows |
 
 ## Quick Start
 
@@ -85,12 +91,14 @@ Review the [Trading Agent documentation](/docs/trading-agent/introduction) for t
 
 ## Project Timeline
 
-| Phase | Duration | Deliverables |
-|:------|:---------|:-------------|
-| **Research & Data Collection** | Weeks 1-4 | Unified data architecture, AWS Lambda functions |
-| **Model Development** | Weeks 5-10 | 15+ ML models, Spark parallelization |
-| **Strategy Optimization** | Weeks 11-14 | 9 trading strategies, MPC controller |
-| **Production Deployment** | Week 15 | End-to-end system, statistical validation |
+| Phase | Duration | Lead | Deliverables |
+|:------|:---------|:-----|:-------------|
+| **Research & Planning** | Weeks 1-2 | All | Project scope, data sources, architecture design |
+| **Data Infrastructure** | Weeks 3-6 | Stuart | Bronze→Gold pipeline, 6 Lambda functions |
+| **ML Model Development** | Weeks 7-11 | Connor | ml_lib framework, model implementations |
+| **Trading Strategies** | Weeks 9-13 | Francisco, Tony | 9 strategies, multi-model backtesting |
+| **Integration & Testing** | Weeks 12-14 | All | End-to-end system, validation |
+| **Production Deployment** | Week 15 | Tony | Daily recommendations, WhatsApp integration |
 
 ## Resources
 

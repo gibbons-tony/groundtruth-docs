@@ -4,159 +4,171 @@ sidebar_position: 1
 
 # Forecast Agent
 
-The Forecast Agent is Caramanta's machine learning forecasting engine, delivering probabilistic price predictions for commodity markets through a comprehensive model suite.
+The Forecast Agent is the machine learning forecasting engine for Ground Truth, delivering probabilistic price predictions for coffee and sugar futures through a PySpark-based model framework.
 
 ## Overview
 
-The Forecast Agent implements a "fit many, publish few" strategy, training 15+ ML models and deploying only those that achieve statistical significance and 70%+ directional accuracy.
+The Forecast Agent uses the ml_lib PySpark framework to generate 14-day forecasts with 2,000 Monte Carlo paths per prediction. It implements a "fit many, publish few" strategy: test 200+ model configurations, then backfill and publish only the top ~15 diverse models.
 
-## Key Achievement: 180x Speedup
+**Output**: `commodity.forecast.distributions` (2,000 paths) and `commodity.forecast.point_forecasts` (mean, median, quantiles)
 
-**V1: Sequential Processing** (45 minutes)
-- Single-threaded model training
-- Manual parameter tuning
-- No caching strategy
+## Key Achievement: 180x Speedup Evolution
 
-**V2: Spark Parallelization** (3 minutes)
-- Parallel model training across cluster
-- Distributed hyperparameter search
-- Initial caching implementation
+**V1: Retrain-Per-Forecast** (24-48 hours)
+- Train model for every forecast date
+- Sequential processing
+- No persistence
 
-**V3: Train-Once Architecture** (15 seconds)
-- Pre-trained models with persistent storage
-- Forecast manifest tracking
-- Intelligent cache invalidation
+**V2: Train-Once/Inference-Many** (1-2 hours)
+- Train once, predict many dates
+- Model persistence to DBFS
+- 180x faster than V1
 
-**Result**: 180x faster than V1, enabling real-time predictions
+**V3: ml_lib + Gold Tables** (minutes)
+- 90% fewer rows (7,612 vs 75,000)
+- forecast_testing schema for safe experimentation
+- "Fit many, publish few" compute savings
+
+**Result**: From days to minutes through architectural evolution
 
 ## Model Suite
 
-### 15+ ML Models Evaluated
+### Implemented Models
 
-| Model Family | Models | Best Accuracy | Use Case |
-|:------------|:-------|:--------------|:---------|
-| **Statistical** | ARIMA, SARIMAX | 68% | Seasonal patterns |
-| **Prophet** | Additive, Multiplicative | 72% | Holiday effects |
-| **Tree-Based** | XGBoost, LightGBM | 74% | Feature interactions |
-| **Deep Learning** | LSTM, TFT | 71% | Long-term dependencies |
-| **Ensemble** | Weighted, Stacking | 75% | Robust predictions |
+| Model Family | Implementation | Use Case |
+|:------------|:---------------|:---------|
+| **Statistical** | ARIMA, SARIMAX | Seasonal patterns, weather/FX exogenous variables |
+| **Prophet** | Prophet (additive/multiplicative) | Holiday effects, trend changes |
+| **Tree-Based** | XGBoost | Feature interactions, non-linear relationships |
+| **Baseline** | Random Walk | Benchmark comparison |
+
+**Coffee**: 10 real models (sarimax_auto_weather_v1, prophet_v1, xgboost_weather_v1, etc.)
+**Sugar**: 5 real models (sarimax_auto_weather_v1, prophet_v1, xgboost_weather_v1, arima_auto_v1, random_walk_v1)
 
 ## "Fit Many, Publish Few" Strategy
 
-### Training Phase
-- Train all 15+ models on historical data
-- Comprehensive hyperparameter search
-- Cross-validation on multiple time windows
+### Problem
+Fitting 200+ configurations and publishing all would create testing explosion for Trading Agent (testing 200 forecasts is impractical).
 
-### Validation Phase
-- Statistical significance testing (Diebold-Mariano)
-- 70%+ directional accuracy threshold
-- Consistency across commodities/regions
+### Solution: Three-Phase Approach
 
-### Deployment Phase
-- Only statistically validated models published
-- Typically 3-5 models per commodity
-- 93% compute savings (train once, predict daily)
+**Phase 1: Experiment** (commodity.forecast_testing)
+- Test 200+ model configurations
+- Vary hyperparameters, exogenous features
+- Safe isolated schema
+
+**Phase 2: Evaluate**
+- Measure directional accuracy (DA), MAE, stability
+- SQL-based selection criteria
+- Select top ~15 diverse models
+
+**Phase 3: Backfill & Publish** (commodity.forecast)
+- Backfill only selected 15 models
+- Compute savings: 4,800 hours → 360 hours (93% reduction)
+- Trading Agent tests curated set of 15, not 200
 
 ## Architecture
 
-### Train-Once Pattern
+### Data Sources
 
-```mermaid
-graph TD
-    A[Historical Data] --> B[Train Models]
-    B --> C[Persist to Storage]
-    C --> D[Daily Predictions]
-    D --> E[Forecast Tables]
+The Forecast Agent consumes gold tables from the Research Agent:
 
-    F[Forecast Manifest] --> G{Forecast Exists?}
-    G -->|No| D
-    G -->|Yes| H[Use Cached]
-```
+**Production**: `commodity.gold.unified_data`
+- Forward-filled features (no NULLs)
+- 7,612 rows (Coffee + Sugar, 2015-2024)
+- Ready for immediate use
 
-**Benefits**:
-- Models trained once offline
-- Daily predictions in less than 15 seconds
-- Consistent model versions
-- Reduced compute costs
+**Experimental**: `commodity.gold.unified_data_raw`
+- NULLs preserved (~30% market data, ~73% GDELT)
+- Requires `ImputationTransformer` from ml_lib
+- For testing custom imputation strategies
 
-### Spark Parallelization
+### Testing Schema
 
+`commodity.forecast_testing.*` - Isolated experimentation:
+- distributions
+- point_forecasts
+- model_metadata
+- validation_results
+
+Test configurations here before promoting to production (`commodity.forecast.*`)
+
+### ml_lib Framework
+
+**Key Components**:
+
+1. **GoldDataLoader** - Load production or experimental tables
+2. **ImputationTransformer** - 4 imputation strategies (forward-fill, mean, median, zero)
+3. **TimeSeriesForecastCV** - Cross-validation framework
+4. **Model Implementations** - SARIMAX, Prophet, XGBoost, ARIMA, Random Walk
+
+**Example Usage**:
 ```python
-# Parallel backfill pattern
-forecast_df = (
-    spark
-    .range(num_dates)
-    .repartition(num_workers)
-    .mapInPandas(generate_forecasts, schema)
-    .write
-    .mode("append")
-    .saveAsTable("commodity.forecast.distributions")
-)
-```
+from forecast_agent.ml_lib.cross_validation.data_loader import GoldDataLoader
 
-**Performance Gains**:
-- 20x faster backfills vs. sequential
-- Horizontal scaling with cluster size
-- Cost-efficient spot instance usage
+loader = GoldDataLoader()  # Defaults to unified_data
+df = loader.load(commodity='Coffee')
+
+# Or use raw table with imputation
+loader_raw = GoldDataLoader(table_name='commodity.gold.unified_data_raw')
+df_raw = loader_raw.load(commodity='Coffee')
+```
 
 ## Forecast Output
 
-### Distribution Forecasts
-**Table**: `commodity.forecast.distributions`
+All tables in `commodity.forecast` schema:
+
+### `commodity.forecast.distributions`
 - 2,000 Monte Carlo paths per forecast
-- Captures full uncertainty distribution
-- Enables risk-aware trading decisions
+- Columns: forecast_date, commodity, region, model_name, path_id, day_1...day_14, actual_close
+- Used by Trading Agent for risk analysis
 
-### Point Forecasts
-**Table**: `commodity.forecast.point_forecasts`
-- Mean, median, quantiles
-- Confidence intervals
-- Easier consumption for downstream systems
+### `commodity.forecast.point_forecasts`
+- 14-day forecasts with prediction intervals
+- Columns: forecast_date, commodity, region, model_name, day_1...day_14, actual_close
+- Mean, median, quantiles computed from distributions
 
-### Model Metadata
-**Table**: `commodity.forecast.model_metadata`
-- Model type, parameters
-- Training date, data range
-- Performance metrics
+### `commodity.forecast.model_metadata`
+- Model performance metrics
+- Columns: model_name, commodity, MAE, RMSE, Dir Day0 (directional accuracy)
+- Tracks which models are deployed
 
-## Forecast Quality Metrics
+## Key Metrics
 
-| Metric | Target | Achieved | Status |
-|:-------|:-------|:---------|:-------|
-| **Directional Accuracy** | 70%+ | 72% avg | ✓ Exceeded |
-| **Mean Absolute Error** | less than 5% | 4.2% | ✓ Achieved |
-| **Forecast Coverage** | 100% | 100% | ✓ Complete |
-| **Latency** | less than 30s | 15s | ✓ Exceeded |
+**MAE** (Mean Absolute Error): Average prediction error in dollars
+**RMSE** (Root Mean Squared Error): Penalizes large errors
+**Dir Day0**: Directional accuracy from day 0 - measures if day i > day 0 (trading signal quality)
+
+**Metric tracked in**: `commodity.forecast.model_metadata` table
 
 ## Key Innovations
 
-### 1. Forecast Manifest Tracking
+### 1. Gold Table Integration
 
-**Innovation**: Metadata table tracking which forecasts exist for each (date, commodity, region, model).
-
-**Impact**:
-- Efficient forecast retrieval
-- Automatic backfill detection
-- Audit trail for compliance
-
-### 2. Model Persistence
-
-**Innovation**: Pre-train models, persist to DBFS, predict on demand.
+**Innovation**: 90% row reduction through array-based regional data
 
 **Impact**:
-- 180x faster predictions
-- Consistent model versions
-- Reduced compute costs
+- 7,612 rows vs 75,000 (faster model training)
+- Flexible NULL handling (production vs experimental)
+- Simplified data grain
 
-### 3. Statistical Validation
+### 2. Testing Schema Isolation
 
-**Innovation**: Rigorous testing (Diebold-Mariano, directional accuracy) before deployment.
+**Innovation**: Separate `commodity.forecast_testing` schema for safe experimentation
 
 **Impact**:
-- Only statistically significant models deployed
-- Improved trading performance
-- Risk mitigation
+- Test 200+ configs without polluting production
+- SQL-based model selection
+- Clean promotion workflow
+
+### 3. "Fit Many, Publish Few"
+
+**Innovation**: Comprehensive testing, selective backfilling
+
+**Impact**:
+- 93% compute savings (4,800 → 360 hours)
+- Trading Agent tests curated 15 models, not 200
+- Freedom to experiment without production impact
 
 ## Implementation Patterns
 

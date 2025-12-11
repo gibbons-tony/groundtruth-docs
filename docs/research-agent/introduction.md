@@ -4,64 +4,74 @@ sidebar_position: 1
 
 # Research Agent
 
-The Research Agent is the data foundation of Caramanta, responsible for collecting, processing, and preparing all data for forecasting and trading operations.
+The Research Agent is the data foundation of the Ground Truth system, responsible for collecting, processing, and preparing all data for forecasting and trading operations.
 
 ## Overview
 
-The Research Agent implements a Bronze → Silver → Gold medallion architecture on Databricks, transforming raw data from multiple sources into a unified, analysis-ready dataset.
+The Research Agent implements a Bronze → Gold medallion architecture on Databricks, transforming raw data from multiple sources into production-ready ML tables.
+
+**Current Production Tables:**
+- `commodity.gold.unified_data` - Production (forward-filled, 7,612 rows)
+- `commodity.gold.unified_data_raw` - Experimental (NULLs preserved for custom imputation)
 
 ## Key Achievement: 90% Data Reduction
 
-**Challenge**: Raw data from multiple sources created 75,000+ rows with gaps, inconsistencies, and null values.
+**Challenge**: Legacy silver table (`commodity.silver.unified_data`) had 75,000 rows with exploded regional data.
 
-**Solution**: Implemented unified data architecture with forward-fill interpolation strategy.
+**Solution**: Gold layer with array-based regional data and optimized grain.
 
 **Results**:
-- Reduced from 75,000 raw data points to 7,600 unified daily records
+- Reduced from 75,000 silver rows to 7,612 gold rows (90% reduction)
 - Maintained continuous daily coverage from 2015-07-07 to present
-- Zero null values through intelligent forward-filling
-- Consistent data grain: (date, commodity, region)
+- Weather and GDELT data stored as arrays (65 regions)
+- Grain: (date, commodity) instead of (date, commodity, region)
 
 ## Architecture
 
 ### 6 AWS Lambda Functions
 
-The Research Agent uses event-driven architecture with AWS Lambda:
+The Research Agent uses event-driven architecture with AWS Lambda (EventBridge triggers at 2AM UTC daily):
 
-1. **Market Data Fetcher** - ICE & CME commodity prices
-2. **Weather Data Collector** - OpenWeatherMap regional data
-3. **Economic Indicators** - FRED, World Bank macroeconomic data
-4. **FX Rates** - Currency conversion data
-5. **Volatility Data** - CBOE VIX market sentiment
-6. **News Sentiment** - NewsAPI commodity keywords
+1. **market-data-fetcher** - Coffee/Sugar futures prices (ICE, CME)
+2. **weather-data-fetcher** - Regional weather (65 producer locations via OpenWeatherMap)
+3. **vix-data-fetcher** - CBOE VIX volatility index
+4. **fx-calculator-fetcher** - Exchange rates (24 currencies including COP)
+5. **cftc-data-fetcher** - Commitment of Traders reports
+6. **GDELT pipeline** - News sentiment (4 functions)
 
-**Cost Efficiency**: $0.20/day (vs. $5+/day for always-on servers)
+**Infrastructure**: Lambda functions → S3 → Databricks Bronze tables
 
 ### Data Flow
 
 ```mermaid
 graph LR
     A[External APIs] --> B[AWS Lambda]
-    B --> C[S3 Raw Storage]
+    B --> C[S3 Landing Zone]
     C --> D[Databricks Bronze]
-    D --> E[Databricks Silver]
-    E --> F[Databricks Gold]
-    F --> G[Forecast Agent]
+    D --> E[Databricks Gold]
+    E --> F[Forecast Agent]
+
+    E -->|unified_data| F
+    E -->|unified_data_raw| F
 ```
 
 ### Bronze Layer (Raw Data)
-- `commodity.bronze.market` - Trading days only, has gaps
-- `commodity.bronze.weather` - Daily, complete
-- `commodity.bronze.vix` - Trading days only
-- `commodity.bronze.forex` - Weekdays only
-- `commodity.bronze.gdelt` - News sentiment data
+- `commodity.bronze.market_data` - Coffee/Sugar OHLCV (trading days only)
+- `commodity.bronze.weather` - Regional temperature, humidity, precipitation
+- `commodity.bronze.vix` - Market volatility (trading days only)
+- `commodity.bronze.fx_rates` - 24 currency pairs
+- `commodity.bronze.gdelt` - News sentiment scores (post-2021)
 
-### Silver Layer (Processed)
-- Legacy: `commodity.silver.unified_data` (90% larger, deprecated Q1 2025)
+### Gold Layer (Production - Current)
+- **`commodity.gold.unified_data`** - Production table (forward-filled, 7,612 rows)
+  - All features forward-filled except pre-2021 GDELT
+  - Weather/GDELT as arrays
+  - Grain: (date, commodity)
 
-### Gold Layer (Production)
-- **`commodity.gold.unified_data`** - Forward-filled, no NULLs (USE THIS for forecasting)
-- `commodity.gold.unified_data_raw` - Experimental with NULLs preserved
+- **`commodity.gold.unified_data_raw`** - Experimental table (NULLs preserved)
+  - Only `close` price forward-filled
+  - Requires custom imputation
+  - Includes missingness flags: `has_market_data`, `has_weather_data`, `has_gdelt_data`
 
 ## Data Sources
 
@@ -76,26 +86,34 @@ graph LR
 
 ## Data Quality Metrics
 
-| Metric | Before | After | Improvement |
-|:-------|:-------|:------|:------------|
-| **Coverage** | 85% (trading days only) | 100% (all days) | +15% |
-| **Nulls** | 12,000+ null values | 0 nulls | 100% |
-| **Consistency** | Multiple grains | Single grain | Unified |
-| **Storage** | 150 MB | 12 MB | 92% reduction |
+| Metric | Silver (Legacy) | Gold (Production) | Improvement |
+|:-------|:----------------|:------------------|:------------|
+| **Rows** | 75,000 (exploded regions) | 7,612 (array-based) | 90% reduction |
+| **Grain** | (date, commodity, region) | (date, commodity) | Simplified |
+| **Nulls** | 0 (forward-filled) | 0 production, ~30% raw | Flexible |
+| **Coverage** | 2015-2024 | 2015-2024 | Same |
 
 ## Key Features
 
 ### Forward-Fill Interpolation
-Prices are forward-filled on non-trading days (weekends, holidays) to maintain continuous daily coverage required by ML models.
+`commodity.gold.unified_data`: All features forward-filled for continuous daily coverage (weekends, holidays included).
 
 ### Array-Based Regional Data
-Weather and GDELT data stored as arrays to reduce row count by 90% while preserving all regional information.
+Weather and GDELT stored as arrays instead of exploded rows:
+- Weather: 65 regional readings as array
+- GDELT: Variable article counts per day
+- Result: 90% row reduction (75k → 7.6k)
+
+### Flexible NULL Handling
+Two tables for different use cases:
+- **Production** (`unified_data`): Forward-filled, ready to use
+- **Experimental** (`unified_data_raw`): NULLs preserved for custom imputation strategies
 
 ### Delta Lake Storage
-- Time-travel versioning
+- Unity Catalog integration
 - ACID transactions
-- Efficient parquet compression
-- Cross-agent data sharing
+- Time-travel versioning
+- Cross-agent data sharing via commodity.* schema
 
 ## Documentation
 

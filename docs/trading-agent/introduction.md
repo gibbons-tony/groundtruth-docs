@@ -4,191 +4,168 @@ sidebar_position: 1
 
 # Trading Agent
 
-The Trading Agent is Caramanta's strategy optimization and execution engine, converting ML forecasts into actionable trading recommendations through rigorous statistical validation.
+The Trading Agent converts commodity price forecasts from the Forecast Agent into actionable trading recommendations through backtesting, strategy analysis, and multi-model comparison.
 
 ## Overview
 
-The Trading Agent implements a Rolling Horizon MPC (Model Predictive Control) framework with 9 distinct trading strategies, deploying only those that achieve statistical significance.
+The Trading Agent implements 9 trading strategies (4 baseline + 5 prediction-based) and tests them across all forecasting models to identify which combinations perform best.
 
-## Key Achievement: 70% Accuracy Threshold
+**Current Status**: Supports daily recommendations, multi-model backtesting, and WhatsApp integration with multi-currency support (15+ currencies including COP).
 
-**Challenge**: Not all ML models produce tradeable signals.
+## Key Achievement: 70% Accuracy Threshold Discovery
 
-**Approach**: Rigorous statistical testing of forecast accuracy.
+**Question**: What forecast accuracy is needed for profitability?
+
+**Approach**: Synthetic model testing with controlled accuracy levels (50%, 60%, 70%, 80%, 90%, 100%)
 
 **Implementation**:
-1. Generate predictions for historical test set
-2. Compare directional accuracy vs. random (50%)
-3. Apply Diebold-Mariano test for statistical significance
-4. Filter models below 70% threshold
+1. Generate synthetic forecasts at each accuracy level
+2. Run backtests with all 9 trading strategies
+3. Compare prediction-based strategies vs baselines
 
-**Results**:
-- 15+ candidate models → 3-5 validated models per commodity
-- 70%+ directional accuracy on unseen data
-- Statistical significance (p < 0.05)
-- Improved Sharpe ratios by 40%
+**Finding**:
+- 70% directional accuracy is the minimum threshold for prediction-based strategies to outperform baseline approaches
+- Below 70%: Baseline strategies (Immediate Sale, Equal Batches) perform better
+- Above 70%: Prediction-based strategies show significant improvement
 
 ## 9 Trading Strategies
 
-| Strategy | Description | Best For |
-|:---------|:-----------|:---------|
-| **Momentum** | Follow strong trends | Trending markets |
-| **Mean Reversion** | Trade oversold/overbought | Range-bound markets |
-| **Breakout** | Enter on price levels | Volatile markets |
-| **Pairs Trading** | Relative value between commodities | Correlated assets |
-| **Calendar Spread** | Futures contract arbitrage | Seasonal patterns |
-| **Weather-Based** | Trade on weather forecasts | Climate-sensitive commodities |
-| **Sentiment** | News-driven positions | Event-driven moves |
-| **ML Signal** | Pure ML predictions | High-confidence models |
-| **Hybrid** | Combined signals | Diversified approach |
+### Baseline Strategies (4)
+1. **Immediate Sale** - Sell at regular intervals regardless of price
+2. **Equal Batches** - Fixed-size periodic sales
+3. **Price Threshold** - Sell when price exceeds threshold
+4. **Moving Average** - Sell when price above moving average
 
-## Rolling Horizon MPC Controller
+### Prediction-Based Strategies (5)
+1. **Consensus** - Follow majority of forecast paths (mode of 2,000 paths)
+2. **Expected Value** - Maximize expected returns (mean of paths)
+3. **Risk-Adjusted** - Balance returns vs uncertainty (Sharpe-like metric)
+4. **Price Threshold Predictive** - Baseline strategy + forecast enhancement
+5. **Moving Average Predictive** - Baseline strategy + forecast enhancement
 
-### Dynamic Decision-Making
+## Multi-Model Analysis
 
-```mermaid
-graph LR
-    A[Current State] --> B[30-Day Forecast]
-    B --> C[Optimize Portfolio]
-    C --> D[Execute Day 1]
-    D --> E[Update State]
-    E --> A
+### Model Coverage
+
+**Coffee** (16 total):
+- 10 real models: sarimax_auto_weather_v1, prophet_v1, xgboost_weather_v1, arima_auto_v1, random_walk_v1, etc.
+- 6 synthetic models: 50%, 60%, 70%, 80%, 90%, 100% accuracy
+
+**Sugar** (11 total):
+- 5 real models: sarimax_auto_weather_v1, prophet_v1, xgboost_weather_v1, arima_auto_v1, random_walk_v1
+- 6 synthetic models: 50%, 60%, 70%, 80%, 90%, 100% accuracy
+
+### Backtest Framework
+
+Test all strategies across all models:
+- Coffee: 9 strategies × 16 models = 144 combinations
+- Sugar: 9 strategies × 11 models = 99 combinations
+- Total: 243 backtest scenarios
+
+**Output**: Identify which model/strategy combinations perform best
+
+## Performance Metrics
+
+Backtests track:
+- **Net Earnings**: Total revenue minus transaction costs
+- **Total Revenue**: Gross sales revenue
+- **Transaction Costs**: Costs incurred from trading
+- **Number of Transactions**: How frequently strategy trades
+
+All metrics computed across all model/strategy combinations for comparison.
+
+## Daily Recommendations
+
+### Real-Time Trading Signals
+
+Generate daily recommendations using latest forecasts:
+
+**Outputs**:
+- Current market price & 7-day trend
+- 14-day forecast range (min, max, mean)
+- Best 3-day sale window
+- Financial impact analysis (sell now vs wait)
+- Multi-currency pricing (15+ currencies)
+
+**Usage**:
+```bash
+python operations/daily_recommendations.py \
+  --commodity coffee \
+  --model sarimax_auto_weather_v1
 ```
 
-**Features**:
-- 30-day forecast horizon
-- Daily reoptimization
-- Risk-adjusted position sizing
-- Transaction cost awareness
-
-### Optimization Objectives
-
-**Maximize**: Expected returns
-**Minimize**: Portfolio variance
-**Subject to**:
-- Position limits
-- Turnover constraints
-- Risk budgets
-
-## Strategy Performance
-
-| Strategy | Sharpe Ratio | Win Rate | Max Drawdown |
-|:---------|:------------|:---------|:-------------|
-| **Momentum** | 1.4 | 68% | -12% |
-| **ML Signal** | 1.8 | 72% | -8% |
-| **Hybrid** | 2.1 | 74% | -6% |
-
-*Backtested on out-of-sample data from 2023-2024*
-
-## Statistical Validation Framework
-
-### Diebold-Mariano Test
-
-Compares forecast accuracy between two models:
-
-```python
-# Test if Model A is significantly better than Model B
-dm_stat, p_value = diebold_mariano_test(
-    errors_a=forecast_errors_model_a,
-    errors_b=forecast_errors_model_b
-)
-
-if p_value < 0.05 and dm_stat < 0:
-    print("Model A is statistically significantly better")
-```
-
-### Directional Accuracy
-
-Percentage of forecasts that correctly predict price direction:
-
-```python
-directional_accuracy = (
-    (forecasts > 0) == (actuals > 0)
-).mean()
-
-# Require 70%+ accuracy for deployment
-if directional_accuracy >= 0.70:
-    deploy_model()
-```
-
-### Sharpe Ratio
-
-Risk-adjusted returns metric:
-
-```
-Sharpe Ratio = (Mean Return - Risk-Free Rate) / Std Dev of Returns
-```
-
-Target: 1.5+
+**Integration**: Structured JSON output for WhatsApp/messaging services
 
 ## Architecture
 
-### Parameter Optimization
+### Data Sources (Unity Catalog)
 
-```python
-# Grid search over strategy parameters
-for param_set in parameter_grid:
-    backtest_results = run_backtest(
-        strategy=momentum_strategy,
-        params=param_set,
-        data=historical_data
-    )
-    if backtest_results.sharpe_ratio > best_sharpe:
-        best_params = param_set
+All data accessed from Databricks:
+
+**Forecasts**: `commodity.forecast.distributions`
+- 2,000 Monte Carlo paths per forecast
+- 14-day horizon
+- All models (Coffee: 10, Sugar: 5)
+
+**Market Data**: `commodity.bronze.market_data`
+- Historical OHLCV prices
+- Trading days coverage
+
+**FX Rates**: `commodity.bronze.fx_rates`
+- 24 currency pairs
+- Daily rates for multi-currency support
+
+**Zero CSV dependencies** - All data via Databricks SQL connection
+
+### Production Framework
+
+**Directory Structure**:
 ```
-
-### Backtesting Framework
-
-**Features**:
-- Walk-forward validation
-- Transaction cost modeling
-- Realistic slippage assumptions
-- Multiple performance metrics
-
-### Risk Management
-
-**Position Sizing**:
-- Kelly Criterion
-- Volatility-based sizing
-- Maximum position limits
-
-**Portfolio Constraints**:
-- Max 30% in single commodity
-- Max 50% in single strategy
-- Correlation-based diversification
+trading_agent/
+├── production/           # Backtest engine & strategies
+│   ├── runners/          # Multi-commodity backtesting
+│   ├── strategies/       # 9 strategy implementations
+│   └── core/             # Backtest engine
+├── operations/           # Daily recommendations
+├── whatsapp/             # WhatsApp integration
+└── data_access/          # Unity Catalog interface
+```
 
 ## Key Features
 
-### 1. Multi-Granularity Analysis
+### 1. Multi-Currency Support
 
-Test strategies across different time horizons:
-- Daily rebalancing
-- Weekly rebalancing
-- Monthly rebalancing
+Automatic currency conversion for 15+ currencies:
 
-### 2. Walk-Forward Validation
+**Major Producers**: COP (Colombia), VND (Vietnam), BRL (Brazil), INR (India), THB (Thailand), IDR (Indonesia), ETB (Ethiopia), HNL (Honduras), UGX (Uganda), MXN (Mexico), PEN (Peru)
 
-Prevents overfitting:
-1. Train on Period 1
-2. Test on Period 2
-3. Retrain with Period 1+2
-4. Test on Period 3
-5. Repeat...
+**Major Economies**: USD, EUR, GBP, JPY, CNY, AUD, CHF, KRW, ZAR
 
-### 3. Transaction Cost Modeling
+All recommendations show local currency impact for Colombian traders.
 
-Realistic P&L calculation:
-- Bid-ask spread
-- Market impact
-- Commission fees
+### 2. WhatsApp Integration
 
-### 4. Real-Time Execution
+Structured JSON output ready for messaging:
+```json
+{
+  "market": {"current_price_usd": 105.50, "local_prices": {...}},
+  "recommendation": {"action": "HOLD", "financial_impact": {...}}
+}
+```
 
-**Workflow**:
-1. Receive daily forecasts (7:00 AM UTC)
-2. Optimize portfolio (7:30 AM UTC)
-3. Generate trading signals
-4. Execute trades (market open)
+### 3. Multi-Model Comparison
+
+Test all forecasting models simultaneously:
+- Compare model performance
+- Identify best model/strategy combinations
+- Statistical significance testing
+
+### 4. Synthetic Accuracy Testing
+
+Controlled experiments with synthetic forecasts:
+- Test different accuracy levels (50%-100%)
+- Determine minimum accuracy threshold
+- Validate strategy logic
 
 ## Performance Metrics
 
