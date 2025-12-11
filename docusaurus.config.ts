@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Caramanta',
-  tagline: 'AI-Powered Commodity Trading Agent with Advanced Forecasting',
+  title: 'Ground Truth',
+  tagline: 'Commodity Forecasting System - Technical Documentation',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -44,12 +44,12 @@ const config: Config = {
   themeConfig: {
     image: 'img/caramanta-social-card.jpg',
     colorMode: {
-      defaultMode: 'dark',
+      defaultMode: 'light',
       disableSwitch: false,
-      respectPrefersColorScheme: false,
+      respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Caramanta',
+      title: 'Ground Truth',
       logo: {
         alt: 'Caramanta Logo',
         src: 'img/logo.svg',

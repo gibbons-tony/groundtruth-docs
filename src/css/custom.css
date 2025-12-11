@@ -1,248 +1,29 @@
 /**
- * Caramanta - Modern Technical Documentation
- * Custom styling with glassmorphism, smooth animations, and professional design
+ * Ground Truth - Technical Documentation
+ * Clean, professional styling
  */
 
-/* Light mode colors */
 :root {
-  /* Primary brand colors - Coffee/Cocoa inspired */
-  --ifm-color-primary: #8b4513;
-  --ifm-color-primary-dark: #7d3d11;
-  --ifm-color-primary-darker: #763a10;
-  --ifm-color-primary-darkest: #61300d;
-  --ifm-color-primary-light: #994d15;
-  --ifm-color-primary-lighter: #a05016;
-  --ifm-color-primary-lightest: #b45a19;
+  /* GitHub-style clean colors */
+  --ifm-color-primary: #0366d6;
+  --ifm-color-primary-dark: #0256b8;
+  --ifm-color-primary-darker: #024fa4;
+  --ifm-color-primary-darkest: #013d80;
+  --ifm-color-primary-light: #0476ea;
+  --ifm-color-primary-lighter: #047ff4;
+  --ifm-color-primary-lightest: #1a8bff;
 
-  /* Modern typography */
-  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ifm-heading-font-family: 'Space Grotesk', var(--ifm-font-family-base);
   --ifm-code-font-size: 95%;
-  --ifm-font-size-base: 16px;
-  --ifm-line-height-base: 1.7;
-
-  /* Spacing and layout */
-  --ifm-leading: 1.7;
-  --ifm-container-width-xl: 1400px;
-
-  /* Code highlighting */
-  --docusaurus-highlighted-code-line-bg: rgba(139, 69, 19, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* Dark mode - Modern with glow effects */
 [data-theme='dark'] {
-  /* Vibrant accent colors */
-  --ifm-color-primary: #ff9500;
-  --ifm-color-primary-dark: #e68600;
-  --ifm-color-primary-darker: #d97f00;
-  --ifm-color-primary-darkest: #b36800;
-  --ifm-color-primary-light: #ffa31a;
-  --ifm-color-primary-lighter: #ffaa2b;
-  --ifm-color-primary-lightest: #ffbb4d;
-
-  /* Dark background with depth */
-  --ifm-background-color: #0a0a0a;
-  --ifm-background-surface-color: #141414;
-
-  /* Subtle glow on primary elements */
-  --primary-glow: 0 0 20px rgba(255, 149, 0, 0.3);
-
-  --docusaurus-highlighted-code-line-bg: rgba(255, 149, 0, 0.15);
-}
-
-/* Glassmorphism effects on navbar */
-.navbar {
-  backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-[data-theme='dark'] .navbar {
-  background-color: rgba(20, 20, 20, 0.8) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Smooth hover transitions */
-.navbar__link {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.navbar__link:hover {
-  transform: translateY(-2px);
-}
-
-[data-theme='dark'] .navbar__link:hover {
-  text-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
-}
-
-/* Hero section styling */
-.hero {
-  background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
-  padding: 4rem 0;
-}
-
-[data-theme='dark'] .hero {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d1810 100%);
-}
-
-.hero__title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-[data-theme='dark'] .hero__title {
-  text-shadow: 0 0 40px rgba(255, 149, 0, 0.5);
-}
-
-/* Card components with glassmorphism */
-.card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme='dark'] .card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 149, 0, 0.2);
-}
-
-[data-theme='dark'] .card:hover {
-  box-shadow: 0 20px 40px rgba(255, 149, 0, 0.2);
-  border-color: rgba(255, 149, 0, 0.4);
-}
-
-/* Code blocks with modern styling */
-.prism-code {
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-/* Sidebar improvements */
-.theme-doc-sidebar-container {
-  border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-container {
-  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Improved link styling */
-a {
-  transition: all 0.2s ease;
-}
-
-[data-theme='dark'] a {
-  color: var(--ifm-color-primary-lighter);
-}
-
-[data-theme='dark'] a:hover {
-  color: var(--ifm-color-primary-lightest);
-  text-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
-}
-
-/* Button enhancements */
-.button {
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme='dark'] .button--primary {
-  box-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
-}
-
-[data-theme='dark'] .button--primary:hover {
-  box-shadow: 0 0 30px rgba(255, 149, 0, 0.5);
-}
-
-/* Micro-animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.markdown > * {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-/* Footer styling */
-.footer {
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.05) 100%);
-}
-
-[data-theme='dark'] .footer {
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
-}
-
-/* Admonitions (info boxes) */
-.admonition {
-  border-radius: 8px;
-  border-left-width: 4px;
-}
-
-/* Search bar */
-.navbar__search-input {
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.navbar__search-input:focus {
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
-}
-
-[data-theme='dark'] .navbar__search-input:focus {
-  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
-}
-
-/* Tables */
-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* Breadcrumbs */
-.breadcrumbs__link {
-  transition: all 0.2s ease;
-}
-
-/* Pagination */
-.pagination-nav__link {
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.pagination-nav__link:hover {
-  transform: translateX(4px);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 996px) {
-  .hero__title {
-    font-size: 2.5rem;
-  }
+  --ifm-color-primary: #539bf5;
+  --ifm-color-primary-dark: #4184e4;
+  --ifm-color-primary-darker: #3a7bd5;
+  --ifm-color-primary-darkest: #2f6ab6;
+  --ifm-color-primary-light: #6cb1ff;
+  --ifm-color-primary-lighter: #7bb9ff;
+  --ifm-color-primary-lightest: #a3cdff;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
