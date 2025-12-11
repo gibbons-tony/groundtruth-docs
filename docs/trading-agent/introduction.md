@@ -8,6 +8,8 @@ Commodity trading strategy backtesting and optimization framework.
 
 **Source Code**: `trading_agent/production/` (9,105 lines across 3 subsystems)
 
+**📖 [Complete Strategy Implementation Guide →](./strategies)** - Comprehensive technical reference with detailed explanations of all 10 strategies, technical indicators (RSI, ADX, CV), cost models, academic references, and implementation examples.
+
 ---
 
 ## System Architecture
