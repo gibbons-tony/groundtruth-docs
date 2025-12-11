@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Trading Agent
+# Profit Maximization Agent
 
 Commodity trading strategy backtesting and optimization framework.
 

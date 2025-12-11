@@ -72,7 +72,7 @@ const config: Config = {
         },
         {
           to: '/docs/trading-agent/introduction',
-          label: 'Trading Agent',
+          label: 'Profit Maximization Agent',
           position: 'left',
         },
         {
@@ -102,7 +102,7 @@ const config: Config = {
               to: '/docs/forecast-agent/introduction',
             },
             {
-              label: 'Trading Agent',
+              label: 'Profit Maximization Agent',
               to: '/docs/trading-agent/introduction',
             },
           ],

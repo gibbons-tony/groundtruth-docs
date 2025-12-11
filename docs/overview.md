@@ -29,7 +29,7 @@ Synthetic model testing revealed that 70% directional accuracy is the minimum th
 ```mermaid
 graph LR
     A[Research Agent] --> B[Forecast Agent]
-    B --> C[Trading Agent]
+    B --> C[Profit Maximization Agent]
 
     A -->|Gold Tables| D[(Delta Lake)]
     B -->|Distributions/Forecasts| D
@@ -61,7 +61,7 @@ graph LR
 - 14-day forecasts with 2,000 Monte Carlo paths
 - [📂 View Code on GitHub →](https://github.com/gibbonstony/ucberkeley-capstone/tree/main/forecast_agent)
 
-### [Trading Agent](/docs/trading-agent/introduction)
+### [Profit Maximization Agent](/docs/trading-agent/introduction)
 **Strategy backtesting framework**
 - 10 trading strategies (4 baseline + 5 prediction-based + 1 MPC)
   - Baseline: ImmediateSale, EqualBatch, PriceThreshold, MovingAverage
@@ -86,7 +86,7 @@ graph LR
 
 - [Research Agent](/docs/research-agent/introduction) - Data collection and ETL
 - [Forecast Agent](/docs/forecast-agent/introduction) - Forecasting framework
-- [Trading Agent](/docs/trading-agent/introduction) - Strategy backtesting
+- [Profit Maximization Agent](/docs/trading-agent/introduction) - Strategy backtesting
 
 ## Resources
 
